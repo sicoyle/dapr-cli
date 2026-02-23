@@ -233,12 +233,6 @@ func TestSchedulerGet(t *testing.T) {
 		t.Log(err)
 	}()
 
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		output, err := cmdSchedulerList()
-		require.NoError(t, err)
-		assert.Len(c, strings.Split(output, "\n"), 10)
-	}, time.Second*30, time.Millisecond*10)
-
 	expNames := []string{
 		"actor/myactortype/actorid1/test1",
 		"actor/myactortype/actorid2/test2",
@@ -247,6 +241,49 @@ func TestSchedulerGet(t *testing.T) {
 		"activity/test-scheduler/xyz1::0::1",
 		"activity/test-scheduler/xyz2::0::1",
 	}
+
+	expWorkflowPrefixes := []string{
+		"workflow/test-scheduler/abc1",
+		"workflow/test-scheduler/abc2",
+	}
+
+	// Wait for all expected items to be present in the scheduler list
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		output, err := cmdSchedulerList()
+		require.NoError(t, err)
+		lines := strings.Split(output, "\n")
+		
+		// Parse scheduler items
+		schedulerItems := make(map[string]bool)
+		for _, line := range lines[1:] {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			fields := strings.Fields(line)
+			if len(fields) < 3 {
+				continue
+			}
+			name := fields[0]
+			schedulerItems[name] = true
+		}
+		
+		// Check all expected names are present
+		for _, name := range expNames {
+			assert.True(c, schedulerItems[name], "expected item %s not found", name)
+		}
+		
+		// Check workflows by prefix
+		foundWorkflows := 0
+		for name := range schedulerItems {
+			for _, prefix := range expWorkflowPrefixes {
+				if strings.HasPrefix(name, prefix) {
+					foundWorkflows++
+					break
+				}
+			}
+		}
+		assert.Equal(c, len(expWorkflowPrefixes), foundWorkflows, "expected %d workflow items, found %d", len(expWorkflowPrefixes), foundWorkflows)
+	}, time.Second*30, time.Millisecond*10)
 
 	t.Run("short", func(t *testing.T) {
 		for _, name := range expNames {
