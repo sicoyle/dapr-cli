@@ -85,7 +85,7 @@ func StopAppsWithRunFile(runTemplatePath string) error {
 					return errKill
 				}
 			} else {
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(1 * time.Second)
 				// Check if the process group still exists before sending SIGKILL.
 				// Signal 0 doesn't send a signal, it only checks if the process/process group exists.
 				if errCheck := syscall.Kill(-pgid, syscall.Signal(0)); errCheck == nil {
@@ -96,6 +96,8 @@ func StopAppsWithRunFile(runTemplatePath string) error {
 						return errKill
 					}
 				}
+				// Give additional time for port release after SIGKILL if needed
+				time.Sleep(500 * time.Millisecond)
 			}
 			return nil
 		}
