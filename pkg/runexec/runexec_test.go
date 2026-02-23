@@ -215,13 +215,14 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, "MyCommand", output.AppCMD.Args[0])
 			assert.Equal(t, "--my-arg", output.AppCMD.Args[1])
 		} else {
-			// On Unix the app command is executed via a shell wrapper (/bin/sh -c "exec MyCommand --my-arg").
-			require.GreaterOrEqual(t, len(output.AppCMD.Args), 3)
+			// On Unix the app command is executed via a shell wrapper
+			require.GreaterOrEqual(t, len(output.AppCMD.Args), 5)
 			assert.Equal(t, "/bin/sh", output.AppCMD.Args[0])
 			assert.Equal(t, "-c", output.AppCMD.Args[1])
-			shellCmd := output.AppCMD.Args[2]
-			assert.Contains(t, shellCmd, "MyCommand")
-			assert.Contains(t, shellCmd, "--my-arg")
+			assert.Equal(t, "exec \"$@\"", output.AppCMD.Args[2])
+			assert.Equal(t, "sh", output.AppCMD.Args[3])
+			assert.Equal(t, "MyCommand", output.AppCMD.Args[4])
+			assert.Equal(t, "--my-arg", output.AppCMD.Args[5])
 		}
 
 		assertArgumentEqual(t, "app-channel-address", "localhost", output.DaprCMD.Args)
