@@ -485,6 +485,11 @@ func TestSchedulerDeleteAll(t *testing.T) {
 		cmdStopWithRunTemplate(runFilePath)
 		must(t, cmdUninstall, "failed to uninstall Dapr")
 	})
+
+	// Stop any existing instance before starting to ensure port is free
+	cmdStopWithRunTemplate(runFilePath)
+	time.Sleep(time.Millisecond * 500)
+
 	args := []string{"-f", runFilePath}
 
 	go func() {
