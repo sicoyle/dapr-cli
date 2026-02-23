@@ -133,7 +133,7 @@ func TestSchedulerList(t *testing.T) {
 			"workflow/test-scheduler/abc2",
 		}
 		foundWorkflows := 0
-		for name := range schedulerItems {
+		for name := range schedulerCounts {
 			for _, prefix := range expWorkflowPrefixes {
 				if strings.HasPrefix(name, prefix) {
 					foundWorkflows++

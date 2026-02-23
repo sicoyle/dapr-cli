@@ -53,11 +53,15 @@ func startAppProcessInBackground(output *runExec.RunOutput, binary string, args 
 	}
 
 	// Use ForkExec to fork a child, then exec python in the child.
-	// NOTE: This is needed bc forking a python app with async python running (ie everything in durabletask-python) will cause random hangs, no matter the python version.
-	// Doing this this way makes python not sees the fork, starts via exec, so it doesn't cause random hangs due to when forking async python apps where locks and such get corrupted in forking.
-	pid, err := syscall.ForkExec(binary, args, procAttr)
+	// NOTE: This is needed bc forking a python app with async python running (i.e., everything in durabletask-python) will cause random hangs, no matter the python version.
+	// Doing this this way makes python not see the fork, starts via exec, so it doesn't cause random hangs due to when forking async python apps where locks and such get corrupted in forking.
+	argv := append([]string{binary}, args[1:]...)
+	pid, err := syscall.ForkExec(binary, argv, procAttr)
 	if err != nil {
 		return fmt.Errorf("failed to fork/exec app: %w", err)
+	}
+	if output.AppCMD == nil {
+		return fmt.Errorf("app command is nil")
 	}
 	output.AppCMD.Process = &os.Process{Pid: pid}
 

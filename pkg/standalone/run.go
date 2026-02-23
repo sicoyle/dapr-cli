@@ -621,7 +621,7 @@ func GetAppCommand(config *RunConfig) *exec.Cmd {
 
 	if runtime.GOOS == daprWindowsOS {
 		// On Windows, run the executable directly (no shell).
-		// TODO: In future this will likely need updates if Window faces the same Python threading issues.
+		// TODO: In future this will likely need updates if Windows faces the same Python threading issues.
 		cmd := exec.Command(command, args...)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, config.getEnv()...)
@@ -630,13 +630,9 @@ func GetAppCommand(config *RunConfig) *exec.Cmd {
 	}
 
 	// Use shell exec to avoid forking, which breaks Python threading on Unix
-	allArgs := append([]string{command}, args...)
-	quotedArgs := make([]string, len(allArgs))
-	for i, arg := range allArgs {
-		quotedArgs[i] = fmt.Sprintf("%q", arg)
-	}
-	shellCmd := fmt.Sprintf("exec %s", strings.Join(quotedArgs, " "))
-	cmd := exec.Command("/bin/sh", "-c", shellCmd)
+	shArgs := []string{"-c", "exec \"$@\"", "sh", command}
+	shArgs = append(shArgs, args...)
+	cmd := exec.Command("/bin/sh", shArgs...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, config.getEnv()...)
 	setProcessGroup(cmd)

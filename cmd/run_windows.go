@@ -33,24 +33,29 @@ func setDaprProcessGroupForRun(cmd *exec.Cmd) {
 // startAppProcessInBackground starts the app process using exec.Command,
 // sets output.AppCMD to the new command, and runs a goroutine that waits and signals sigCh.
 func startAppProcessInBackground(output *runExec.RunOutput, binary string, args []string, env []string, sigCh chan os.Signal) error {
-	appCmd := exec.Command(binary, args...)
-	appCmd.Env = env
-	appCmd.Stdin = os.Stdin
-	appCmd.Stdout = os.Stdout
-	appCmd.Stderr = os.Stderr
-	if err := appCmd.Start(); err != nil {
+	if output.AppCMD == nil {
+		output.AppCMD = exec.Command(binary, args...)
+	} else {
+		output.AppCMD.Path = binary
+		output.AppCMD.Args = append([]string{binary}, args...)
+	}
+	output.AppCMD.Env = env
+	output.AppCMD.Stdin = os.Stdin
+	output.AppCMD.Stdout = os.Stdout
+	output.AppCMD.Stderr = os.Stderr
+
+	if err := output.AppCMD.Start(); err != nil {
 		return fmt.Errorf("failed to start app: %w", err)
 	}
-	output.AppCMD = appCmd
 
 	go func() {
-		waitErr := appCmd.Wait()
+		waitErr := output.AppCMD.Wait()
 		if waitErr != nil {
 			output.AppErr = waitErr
 			print.FailureStatusEvent(os.Stderr, "The App process exited with error: %s", waitErr.Error())
-		} else if appCmd.ProcessState != nil && !appCmd.ProcessState.Success() {
-			output.AppErr = fmt.Errorf("app exited with status %d", appCmd.ProcessState.ExitCode())
-			print.FailureStatusEvent(os.Stderr, "The App process exited with error code: %d", appCmd.ProcessState.ExitCode())
+		} else if output.AppCMD.ProcessState != nil && !output.AppCMD.ProcessState.Success() {
+			output.AppErr = fmt.Errorf("app exited with status %d", output.AppCMD.ProcessState.ExitCode())
+			print.FailureStatusEvent(os.Stderr, "The App process exited with error code: %d", output.AppCMD.ProcessState.ExitCode())
 		} else {
 			print.SuccessStatusEvent(os.Stdout, "Exited App successfully")
 		}
