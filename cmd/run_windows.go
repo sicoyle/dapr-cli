@@ -33,11 +33,12 @@ func setDaprProcessGroupForRun(cmd *exec.Cmd) {
 // startAppProcessInBackground starts the app process using exec.Command,
 // sets output.AppCMD to the new command, and runs a goroutine that waits and signals sigCh.
 func startAppProcessInBackground(output *runExec.RunOutput, binary string, args []string, env []string, sigCh chan os.Signal) error {
+	cmdArgs := args[1:]
 	if output.AppCMD == nil {
-		output.AppCMD = exec.Command(binary, args...)
+		output.AppCMD = exec.Command(binary, cmdArgs...)
 	} else {
 		output.AppCMD.Path = binary
-		output.AppCMD.Args = append([]string{binary}, args...)
+		output.AppCMD.Args = append([]string{binary}, cmdArgs...)
 	}
 	output.AppCMD.Env = env
 	output.AppCMD.Stdin = os.Stdin

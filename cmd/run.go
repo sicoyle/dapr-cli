@@ -368,10 +368,9 @@ dapr run --run-file /path/to/directory -k
 				appRunning <- false
 				return
 			}
-			envMap := appConfig.GetEnv()
-			env := os.Environ()
-			for k, v := range envMap {
-				env = append(env, fmt.Sprintf("%s=%s", k, v))
+			env := output.AppCMD.Env
+			if len(env) == 0 {
+				env = os.Environ()
 			}
 			env = append(env, fmt.Sprintf("DAPR_HTTP_PORT=%d", output.DaprHTTPPort))
 			env = append(env, fmt.Sprintf("DAPR_GRPC_PORT=%d", output.DaprGRPCPort))

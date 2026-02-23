@@ -71,11 +71,12 @@ func startAppProcessInBackground(output *runExec.RunOutput, binary string, args 
 		if err != nil {
 			output.AppErr = err
 			print.FailureStatusEvent(os.Stderr, "The App process exited with error: %s", err.Error())
-		} else if !waitStatus.Exited() || waitStatus.ExitStatus() != 0 {
+		} else if waitStatus.Signaled() {
+			output.AppErr = fmt.Errorf("app terminated by signal: %s", waitStatus.Signal())
+			print.FailureStatusEvent(os.Stderr, "The App process was terminated by signal: %s", waitStatus.Signal())
+		} else if waitStatus.Exited() && waitStatus.ExitStatus() != 0 {
 			output.AppErr = fmt.Errorf("app exited with status %d", waitStatus.ExitStatus())
-			if waitStatus.ExitStatus() != 0 {
-				print.FailureStatusEvent(os.Stderr, "The App process exited with error code: %d", waitStatus.ExitStatus())
-			}
+			print.FailureStatusEvent(os.Stderr, "The App process exited with error code: %d", waitStatus.ExitStatus())
 		} else {
 			print.SuccessStatusEvent(os.Stdout, "Exited App successfully")
 		}
