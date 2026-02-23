@@ -36,6 +36,7 @@ type AppTestOutput struct {
 	baseLogDirPath           string
 	appLogDoesNotExist       bool
 	daprdLogFileDoesNotExist bool
+	daprdLogPollTimeout      time.Duration
 }
 
 func TestRunWithTemplateFile(t *testing.T) {
@@ -425,6 +426,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"Exited Dapr successfully",
 				"Exited App successfully",
 			},
+			daprdLogPollTimeout: 10 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -456,7 +458,7 @@ func assertLogOutputForRunTemplateExec(t *testing.T, appTestOutput AppTestOutput
 		daprdLogFileName, err := lookUpFileFullName(appTestOutput.baseLogDirPath, "daprd")
 		require.NoError(t, err, "failed to find daprd log file")
 		daprdLogPath := filepath.Join(appTestOutput.baseLogDirPath, daprdLogFileName)
-		readAndAssertLogFileContents(t, daprdLogPath, appTestOutput.daprdLogContent)
+		readAndAssertLogFileContents(t, daprdLogPath, appTestOutput.daprdLogContent, appTestOutput.daprdLogPollTimeout)
 	}
 	if appTestOutput.appLogDoesNotExist {
 		return
@@ -464,14 +466,34 @@ func assertLogOutputForRunTemplateExec(t *testing.T, appTestOutput AppTestOutput
 	appLogFileName, err := lookUpFileFullName(appTestOutput.baseLogDirPath, "app")
 	require.NoError(t, err, "failed to find app log file")
 	appLogPath := filepath.Join(appTestOutput.baseLogDirPath, appLogFileName)
-	readAndAssertLogFileContents(t, appLogPath, appTestOutput.appLogContents)
+	readAndAssertLogFileContents(t, appLogPath, appTestOutput.appLogContents, 0)
 }
 
-func readAndAssertLogFileContents(t *testing.T, logFilePath string, expectedContent []string) {
+func readAndAssertLogFileContents(t *testing.T, logFilePath string, expectedContent []string, pollTimeout time.Duration) {
 	assert.FileExists(t, logFilePath, "log file %s must exist", logFilePath)
+	var contentString string
+	if pollTimeout > 0 {
+		deadline := time.Now().Add(pollTimeout)
+		for time.Now().Before(deadline) {
+			fileContents, err := ioutil.ReadFile(logFilePath)
+			assert.NoError(t, err, "failed to read %s log", logFilePath)
+			contentString = string(fileContents)
+			allPresent := true
+			for _, line := range expectedContent {
+				if !strings.Contains(contentString, line) {
+					allPresent = false
+					break
+				}
+			}
+			if allPresent {
+				return
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
+	}
 	fileContents, err := ioutil.ReadFile(logFilePath)
 	assert.NoError(t, err, "failed to read %s log", logFilePath)
-	contentString := string(fileContents)
+	contentString = string(fileContents)
 	for _, line := range expectedContent {
 		assert.Containsf(t, contentString, line, "expected logline to be present, line=%s", line)
 	}
