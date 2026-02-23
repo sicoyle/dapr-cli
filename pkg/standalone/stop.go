@@ -83,17 +83,6 @@ func StopAppsWithRunFile(runTemplatePath string) error {
 				if errKill != nil && errKill != syscall.ESRCH {
 					return errKill
 				}
-			} else {
-				// Check if the process group still exists before sending SIGKILL.
-				// Signal 0 doesn't send a signal, it only checks if the process/process group exists.
-				if errCheck := syscall.Kill(-pgid, syscall.Signal(0)); errCheck == nil {
-					// Process group still exists, force kill it.
-					errKill := syscall.Kill(-pgid, syscall.SIGKILL)
-					// If process group doesn't exist, treat it as already stopped.
-					if errKill != nil && errKill != syscall.ESRCH {
-						return errKill
-					}
-				}
 			}
 			return nil
 		}

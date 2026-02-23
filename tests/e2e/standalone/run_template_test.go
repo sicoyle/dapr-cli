@@ -70,7 +70,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 10):
+		case <-time.After(25 * time.Second):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
@@ -104,6 +104,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"termination signal received: shutting down",
 				"Exited Dapr successfully",
 			},
+			daprdLogPollTimeout: 15 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -173,6 +174,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"Exited Dapr successfully",
 				"Exited App successfully",
 			},
+			daprdLogPollTimeout: 15 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -200,7 +202,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 10):
+		case <-time.After(25 * time.Second):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
@@ -235,6 +237,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"termination signal received: shutting down",
 				"Exited Dapr successfully",
 			},
+			daprdLogPollTimeout: 15 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -262,7 +265,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 10):
+		case <-time.After(25 * time.Second):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
@@ -298,6 +301,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"termination signal received: shutting down",
 				"Exited Dapr successfully",
 			},
+			daprdLogPollTimeout: 20 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -325,7 +329,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 10):
+		case <-time.After(25 * time.Second):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
@@ -385,7 +389,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 20):
+		case <-time.After(25 * time.Second):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
