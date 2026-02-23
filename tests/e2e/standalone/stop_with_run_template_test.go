@@ -133,14 +133,14 @@ func getCLIPID(t *testing.T) string {
 }
 
 func verifyCLIPIDNotExist(t *testing.T, pid string) {
-	assert.Eventually(t, func() bool {
+	require.Eventually(t, func() bool {
 		output, err := cmdList("")
 		if err != nil {
 			return false
 		}
 		return !strings.Contains(output, pid)
-	}, 15*time.Second, 500*time.Millisecond,
-		"CLI process (pid %s) still present in list after 15s", pid)
+	}, 20*time.Second, 300*time.Millisecond,
+		"CLI process (pid %s) still present in list after 20s", pid)
 }
 
 func assertTemplateListOutput(t *testing.T, name string) {

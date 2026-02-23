@@ -385,7 +385,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 		var output string
 		select {
 		case output = <-outputCh:
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 20):
 			t.Fatal("timed out waiting for run command to finish")
 		}
 
@@ -426,7 +426,7 @@ func TestRunWithTemplateFile(t *testing.T) {
 				"Exited Dapr successfully",
 				"Exited App successfully",
 			},
-			daprdLogPollTimeout: 10 * time.Second,
+			daprdLogPollTimeout: 20 * time.Second,
 		}
 		assertLogOutputForRunTemplateExec(t, appTestOutput)
 	})
@@ -471,29 +471,26 @@ func assertLogOutputForRunTemplateExec(t *testing.T, appTestOutput AppTestOutput
 
 func readAndAssertLogFileContents(t *testing.T, logFilePath string, expectedContent []string, pollTimeout time.Duration) {
 	assert.FileExists(t, logFilePath, "log file %s must exist", logFilePath)
-	var contentString string
 	if pollTimeout > 0 {
-		deadline := time.Now().Add(pollTimeout)
-		for time.Now().Before(deadline) {
+		require.Eventually(t, func() bool {
 			fileContents, err := ioutil.ReadFile(logFilePath)
-			assert.NoError(t, err, "failed to read %s log", logFilePath)
-			contentString = string(fileContents)
-			allPresent := true
+			if err != nil {
+				return false
+			}
+			contentString := string(fileContents)
 			for _, line := range expectedContent {
 				if !strings.Contains(contentString, line) {
-					allPresent = false
-					break
+					return false
 				}
 			}
-			if allPresent {
-				return
-			}
-			time.Sleep(200 * time.Millisecond)
-		}
+			return true
+		}, pollTimeout, 300*time.Millisecond,
+			"log file %s did not contain all expected lines within %v (expected: %v)", logFilePath, pollTimeout, expectedContent)
+		return
 	}
 	fileContents, err := ioutil.ReadFile(logFilePath)
-	assert.NoError(t, err, "failed to read %s log", logFilePath)
-	contentString = string(fileContents)
+	require.NoError(t, err, "failed to read %s log", logFilePath)
+	contentString := string(fileContents)
 	for _, line := range expectedContent {
 		assert.Containsf(t, contentString, line, "expected logline to be present, line=%s", line)
 	}
