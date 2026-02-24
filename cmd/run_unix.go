@@ -41,6 +41,10 @@ func setDaprProcessGroupForRun(cmd *exec.Cmd) {
 // and sets output.AppCMD.Process.
 // It then runs a goroutine that waits and signals sigCh.
 func startAppProcessInBackground(output *runExec.RunOutput, binary string, args []string, env []string, sigCh chan os.Signal) error {
+	if output.AppCMD == nil || output.AppCMD.Process != nil {
+		return fmt.Errorf("app command is nil")
+	}
+
 	procAttr := &syscall.ProcAttr{
 		Env: env,
 		// stdin, stdout, and stderr inherit directly from the parent
@@ -59,9 +63,6 @@ func startAppProcessInBackground(output *runExec.RunOutput, binary string, args 
 	pid, err := syscall.ForkExec(binary, argv, procAttr)
 	if err != nil {
 		return fmt.Errorf("failed to fork/exec app: %w", err)
-	}
-	if output.AppCMD == nil {
-		return fmt.Errorf("app command is nil")
 	}
 	output.AppCMD.Process = &os.Process{Pid: pid}
 
