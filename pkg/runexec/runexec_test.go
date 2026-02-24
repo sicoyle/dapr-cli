@@ -217,7 +217,7 @@ func TestRun(t *testing.T) {
 		} else {
 			// On Unix the app command is executed via a shell wrapper
 			require.GreaterOrEqual(t, len(output.AppCMD.Args), 5)
-			assert.Equal(t, "/bin/sh", output.AppCMD.Args[0])
+			assert.Equal(t, "sh", output.AppCMD.Args[0])
 			assert.Equal(t, "-c", output.AppCMD.Args[1])
 			assert.Equal(t, "exec \"$@\"", output.AppCMD.Args[2])
 			assert.Equal(t, "sh", output.AppCMD.Args[3])
