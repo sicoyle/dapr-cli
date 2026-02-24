@@ -62,10 +62,15 @@ func StopAppsWithRunFile(runTemplatePath string) error {
 					return nil
 				}
 				// Fall back to cliPID if pgid is not available.
-				_, err = utils.RunCmdAndWait("kill", "-TERM", fmt.Sprintf("%v", a.CliPID)) //nolint:perfsprint
+				err = syscall.Kill(a.CliPID, syscall.SIGTERM)
 				if err != nil {
-					_, errKill := utils.RunCmdAndWait("kill", "-KILL", fmt.Sprintf("%v", a.CliPID)) //nolint:perfsprint
-					if errKill != nil {
+					// If process doesn't exist (ESRCH), treat it as already stopped.
+					if err == syscall.ESRCH {
+						return nil
+					}
+					errKill := syscall.Kill(a.CliPID, syscall.SIGKILL)
+					// If process doesn't exist, treat it as already stopped.
+					if errKill != nil && errKill != syscall.ESRCH {
 						return errKill
 					}
 				}
